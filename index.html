@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive results for Chaotic Griffiths phase in neuron map networks by Juan S. Rojas and M. G. Cosenza.">
+  <meta name="theme-color" content="#f5f2ea">
+  <title>Chaotic Griffiths Phase — Interactive Paper</title>
+  <style>
+    :root {
+      --paper: #f5f2ea;
+      --paper-2: #ece7dc;
+      --ink: #17201c;
+      --muted: #637068;
+      --line: rgba(23, 32, 28, .16);
+      --green: #2d7252;
+      --green-dark: #164a35;
+      --amber: #d5863a;
+      --blue: #386a8f;
+      --plum: #755a78;
+      --red: #b64f47;
+      --white: #fffdfa;
+      --radius: 22px;
+      --shadow: 0 24px 70px rgba(36, 43, 38, .09);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+      overflow-x: hidden;
+    }
+    a { color: inherit; }
+    button, select, input { font: inherit; }
+    button, select { color: inherit; }
+    button { cursor: pointer; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    ::selection { background: #cde1d5; }
+
+    .progress {
+      position: fixed; inset: 0 auto auto 0; z-index: 100;
+      width: 0; height: 3px; background: var(--green);
+    }
+    .nav {
+      position: fixed; z-index: 90; top: 18px; left: 50%;
+      width: min(920px, calc(100% - 28px));
+      transform: translateX(-50%);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px 10px 18px;
+      border: 1px solid rgba(255,255,255,.5);
+      border-radius: 999px;
+      background: rgba(245,242,234,.82);
+      box-shadow: 0 8px 30px rgba(30,38,33,.08);
+      backdrop-filter: blur(16px);
+    }
+    .brand { font-size: .78rem; font-weight: 760; letter-spacing: .1em; text-transform: uppercase; }
+    .nav-links { display: flex; gap: 5px; }
+    .nav a { text-decoration: none; }
+    .nav-links a, .button {
+      padding: 8px 13px; border-radius: 999px; font-size: .78rem; font-weight: 680;
+    }
+    .nav-links a:hover { background: rgba(23,32,28,.07); }
+    .button { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); text-decoration: none; }
+    .button.dark { color: var(--white); background: var(--ink); border-color: var(--ink); }
+
+    .hero {
+      min-height: 100svh;
+      display: grid; align-items: center;
+      position: relative; isolation: isolate; overflow: hidden;
+      padding: 130px 24px 70px;
+    }
+    .hero::before {
+      content: ""; position: absolute; z-index: -2; inset: 0;
+      background:
+        radial-gradient(circle at 82% 28%, rgba(45,114,82,.17), transparent 28%),
+        radial-gradient(circle at 16% 80%, rgba(213,134,58,.12), transparent 24%),
+        linear-gradient(180deg, #faf8f2 0%, var(--paper) 86%);
+    }
+    #heroCanvas { position: absolute; z-index: -1; inset: 0; width: 100%; height: 100%; opacity: .66; }
+    .hero-inner { width: min(1180px, 100%); margin: 0 auto; }
+    .kicker { display: flex; align-items: center; gap: 12px; color: var(--green-dark); font-size: .76rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .kicker::before { content: ""; width: 36px; height: 1px; background: currentColor; }
+    h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; letter-spacing: -.035em; }
+    h1 { max-width: 960px; margin: 20px 0 22px; font-size: clamp(3.25rem, 8.6vw, 8rem); line-height: .91; }
+    .hero-copy { max-width: 640px; font-size: clamp(1.05rem, 2vw, 1.34rem); color: #425149; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-top: 32px; font-size: .84rem; color: var(--muted); }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; }
+
+    main { position: relative; }
+    .chapter { padding: 110px 24px; }
+    .chapter.alt { background: var(--paper-2); }
+    .wrap { width: min(1120px, 100%); margin: 0 auto; }
+    .narrow { width: min(740px, 100%); margin: 0 auto; }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-size: .72rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+    h2 { margin: 0; font-size: clamp(2.4rem, 5.6vw, 5rem); line-height: 1.01; }
+    h3 { margin: 0; font-size: 1.55rem; }
+    .lede { max-width: 720px; margin: 22px 0 0; color: #4e5b54; font-size: 1.1rem; }
+    .note { color: var(--muted); font-size: .8rem; }
+    .section-head { margin-bottom: 46px; }
+
+    .statement { padding: 150px 24px; text-align: center; }
+    .statement p { max-width: 980px; margin: 0 auto; font: 500 clamp(2rem, 5vw, 4.8rem)/1.08 Georgia, serif; letter-spacing: -.035em; }
+    .statement em { color: var(--green); font-style: normal; }
+
+    .regime-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 42px; }
+    .regime {
+      min-height: 225px; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius);
+      background: rgba(255,253,250,.56);
+    }
+    .regime .num { display: block; margin-bottom: 50px; color: var(--muted); font-size: .75rem; }
+    .regime p { color: var(--muted); font-size: .9rem; }
+    .regime.active { color: var(--white); background: var(--green-dark); transform: translateY(-8px); box-shadow: var(--shadow); }
+    .regime.active p, .regime.active .num { color: rgba(255,255,255,.72); }
+
+    .lab {
+      display: grid; grid-template-columns: minmax(250px, .65fr) minmax(0, 1.35fr); gap: 28px;
+      padding: 22px; border: 1px solid var(--line); border-radius: 30px; background: var(--white); box-shadow: var(--shadow);
+    }
+    .lab-controls { padding: 18px 12px 18px 8px; }
+    .lab-controls p { color: var(--muted); }
+    .range-row { margin-top: 28px; }
+    .range-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+    .epsilon-value { font: 500 2.5rem/1 Georgia, serif; color: var(--green-dark); }
+    input[type="range"] { width: 100%; margin: 18px 0 4px; accent-color: var(--green); }
+    .range-labels { display: flex; justify-content: space-between; color: var(--muted); font-size: .72rem; }
+    .status-chip { display: inline-flex; align-items: center; gap: 7px; margin-top: 18px; padding: 7px 10px; border-radius: 999px; background: #e5eee8; color: var(--green-dark); font-size: .75rem; font-weight: 750; }
+    .status-chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .canvas-wrap { position: relative; min-height: 430px; overflow: hidden; border-radius: 20px; background: #17201c; }
+    #simCanvas { display: block; width: 100%; height: 430px; }
+    .canvas-label { position: absolute; inset: 18px auto auto 20px; color: rgba(255,255,255,.6); font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; }
+
+    .chart-card { padding: 22px; border: 1px solid var(--line); border-radius: 28px; background: var(--white); box-shadow: var(--shadow); }
+    .chart-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 8px 8px 22px; }
+    .chart-top p { max-width: 570px; margin: 8px 0 0; color: var(--muted); font-size: .88rem; }
+    .chart { width: 100%; height: auto; min-height: 430px; display: block; overflow: visible; }
+    .chart .grid { stroke: rgba(23,32,28,.10); }
+    .chart .axis { stroke: rgba(23,32,28,.42); }
+    .chart text { fill: var(--muted); font-family: Inter, system-ui, sans-serif; font-size: 12px; }
+    .tooltip {
+      position: fixed; z-index: 200; pointer-events: none; opacity: 0; transform: translate(-50%, calc(-100% - 12px));
+      min-width: 120px; padding: 9px 11px; border-radius: 10px; color: #fff; background: rgba(23,32,28,.94); font-size: .75rem;
+    }
+
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+    .segmented { display: inline-flex; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); }
+    .segmented button { padding: 7px 11px; border: 0; border-radius: 999px; background: transparent; font-size: .75rem; font-weight: 700; }
+    .segmented button.active { color: #fff; background: var(--ink); }
+    select { padding: 9px 34px 9px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); font-size: .78rem; font-weight: 680; }
+
+    .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+    .metric { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: rgba(245,242,234,.62); }
+    .metric span { display: block; color: var(--muted); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
+    .metric strong { display: block; margin-top: 5px; font: 500 1.45rem Georgia, serif; }
+
+    .architecture { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 40px; }
+    .architecture article { padding: 24px; border-top: 1px solid var(--ink); }
+    .architecture b { display: inline-block; margin-bottom: 30px; color: var(--green); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; }
+    .architecture p { color: var(--muted); font-size: .9rem; }
+
+    .method-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 70px; }
+    .formula { margin: 28px 0; padding: 25px; border-left: 2px solid var(--green); font: 500 clamp(1.25rem, 2.4vw, 2rem)/1.45 Georgia, serif; background: rgba(255,255,255,.42); }
+    .method-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .method-list li { display: grid; grid-template-columns: 42px 1fr; gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .method-list b { color: var(--green); }
+    .method-list p { margin: 3px 0 0; color: var(--muted); font-size: .86rem; }
+
+    footer { padding: 80px 24px 34px; color: #dce5df; background: var(--ink); }
+    footer .wrap { display: grid; grid-template-columns: 1fr auto; gap: 40px; }
+    footer h2 { max-width: 760px; font-size: clamp(2.5rem, 6vw, 5.6rem); }
+    footer p { color: #9eaca4; }
+    .footer-links { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 10px; }
+    .footer-links a { text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.25); }
+    .copyright { grid-column: 1 / -1; margin-top: 50px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.12); font-size: .72rem; color: #87948d; }
+
+    .loading { display: grid; place-items: center; min-height: 350px; color: var(--muted); }
+    .error-box { margin: 20px; padding: 20px; border-radius: 14px; color: #7a302b; background: #f6dfdc; font-size: .86rem; }
+
+    @media (max-width: 820px) {
+      .nav-links a:not(.button) { display: none; }
+      .hero { padding-inline: 20px; }
+      .chapter { padding: 82px 18px; }
+      .lab, .method-grid { grid-template-columns: 1fr; }
+      .lab-controls { padding: 8px; }
+      .regime-grid, .architecture { grid-template-columns: 1fr; }
+      .regime { min-height: 170px; }
+      .regime .num { margin-bottom: 25px; }
+      .regime.active { transform: none; }
+      .chart-top { flex-direction: column; }
+      .metric-row { grid-template-columns: repeat(2, 1fr); }
+      footer .wrap { grid-template-columns: 1fr; }
+      .copyright { grid-column: auto; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <nav class="nav" aria-label="Main navigation">
+    <a class="brand" href="#top">CGP · Neuron Maps</a>
+    <div class="nav-links">
+      <a href="#model">Model</a>
+      <a href="#phase">Phase</a>
+      <a href="#powerlaws">Power laws</a>
+      <a class="button dark" href="https://github.com/JS-Rojas/Criticality-in-Neuron-Map-Networks" target="_blank" rel="noreferrer">Code ↗</a>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
+    <canvas id="heroCanvas" aria-hidden="true"></canvas>
+    <div class="hero-inner">
+      <p class="kicker">Interactive research story</p>
+      <h1>Criticality without fine-tuning.</h1>
+      <p class="hero-copy">Heterogeneous neuron maps form and dissolve synchronized clusters across an extended range of coupling strengths: a chaotic Griffiths phase.</p>
+      <div class="hero-meta">
+        <span>Juan S. Rojas · M. G. Cosenza</span>
+        <span>Chialvo neuron map networks</span>
+        <span>2026 working paper</span>
+      </div>
+      <div class="hero-actions">
+        <a class="button dark" href="#model">Explore the model ↓</a>
+        <a class="button" href="#methods">See the method</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="statement">
+      <p>A critical point is a knife-edge. Heterogeneity can stretch that point into an <em>extended critical region</em>.</p>
+    </section>
+
+    <section class="chapter alt" id="model">
+      <div class="wrap">
+        <div class="section-head narrow">
+          <p class="eyebrow">01 · The model</p>
+          <h2>Turn up the coupling.</h2>
+          <p class="lede">Each dot is a heterogeneous Chialvo map. Move ε and watch the population pass from incoherent activity through intermittent clustering toward collective synchronization.</p>
+        </div>
+
+        <div class="lab">
+          <div class="lab-controls">
+            <h3>Lightweight live simulation</h3>
+            <p>This browser-scale demonstration uses the paper's map equations with fewer neurons. It is for intuition; published statistics come from the full offline simulations.</p>
+            <div class="range-row">
+              <div class="range-head"><label for="epsilonSlider">Coupling ε</label><output class="epsilon-value" id="epsilonValue">0.14</output></div>
+              <input id="epsilonSlider" type="range" min="0" max="0.8" value="0.14" step="0.005">
+              <div class="range-labels"><span>independent</span><span>collective</span></div>
+            </div>
+            <div class="status-chip" id="regimeChip">intermittent regime</div>
+            <p class="note">N = 96 browser neurons · kᵢ ∈ [0.026, 0.030]</p>
+          </div>
+          <div class="canvas-wrap">
+            <span class="canvas-label">activation xᵢ(t) · recent history</span>
+            <canvas id="simCanvas" role="img" aria-label="Live activity traces from a small network of heterogeneous Chialvo maps"></canvas>
+          </div>
+        </div>
+
+        <div class="regime-grid">
+          <article class="regime"><span class="num">D · low coupling</span><h3>Desynchronized</h3><p>Chaotic neurons evolve incoherently and large clusters are rare.</p></article>
+          <article class="regime active"><span class="num">G · intermediate coupling</span><h3>Chaotic Griffiths</h3><p>Clusters repeatedly form and dissolve, producing broad fluctuations and scale-free sizes.</p></article>
+          <article class="regime"><span class="num">S · high coupling</span><h3>Synchronized</h3><p>The global network approaches a shared chaotic trajectory.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapter" id="phase">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">02 · Extended criticality</p>
+          <h2>Fluctuations reveal the phase.</h2>
+          <p class="lede">The dispersion σ(p) of the instantaneous clustered fraction becomes large when the network alternates between coherent and incoherent configurations. Toggle the source of disorder to compare the phase interval.</p>
+        </div>
+        <div class="chart-card">
+          <div class="chart-top">
+            <div><h3>Dispersion of cluster formation</h3><p>Mean across 30 runs. The dashed line is the paper's operational threshold σ(p) = 0.1.</p></div>
+            <div class="segmented" id="dfcTopology">
+              <button class="active" data-mode="global">Parameter disorder</button>
+              <button data-mode="swn">+ topological disorder</button>
+            </div>
+          </div>
+          <div id="dfcChart" class="loading">Loading simulation results…</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapter alt" id="powerlaws">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">03 · Scale-free clusters</p>
+          <h2>Explore the heavy tails.</h2>
+          <p class="lede">The expensive step—generating millions of cluster observations—is already complete. This chart reads the saved histograms and performs only a lightweight visual slope fit over 10 ≤ s ≤ 1000.</p>
+        </div>
+        <div class="chart-card">
+          <div class="chart-top">
+            <div><h3>Cluster-size distribution P(s)</h3><p>Axes are logarithmic. Change topology and ε; hover over the curve for exact counts.</p></div>
+            <div class="controls">
+              <div class="segmented" id="plTopology">
+                <button class="active" data-mode="global">Global</button>
+                <button data-mode="swn">Small-world</button>
+              </div>
+              <label><span class="sr-only">Coupling epsilon</span><select id="epsilonSelect" aria-label="Choose coupling epsilon"></select></label>
+            </div>
+          </div>
+          <div id="plChart" class="loading">Loading precomputed histograms…</div>
+          <div class="metric-row">
+            <div class="metric"><span>Topology</span><strong id="metricTopology">Global</strong></div>
+            <div class="metric"><span>Coupling ε</span><strong id="metricEpsilon">—</strong></div>
+            <div class="metric"><span>Visual α</span><strong id="metricAlpha">—</strong></div>
+            <div class="metric"><span>Fit window</span><strong>10–1000</strong></div>
+          </div>
+          <p class="note" style="margin:16px 8px 2px">The displayed α is a log–log regression guide, not the final goodness-of-fit result. Publish MLE, KS, bootstrap p-value, x<sub>min</sub>, and uncertainty from the offline validation pipeline.</p>
+        </div>
+
+        <div class="architecture">
+          <article><b>1 · Compute offline</b><h3>Simulate once</h3><p>Run the large N network, discard transients, identify clusters, and save histograms. This remains in Python/NumPy.</p></article>
+          <article><b>2 · Export compactly</b><h3>Store results</h3><p>CSV files hold cluster counts. A small summary file can hold MLE α, x<sub>min</sub>, KS distance, p-value, and confidence intervals.</p></article>
+          <article><b>3 · Render instantly</b><h3>Explore in-browser</h3><p>GitHub Pages fetches those static files and redraws plots immediately. No server, notebook, or expensive Monte Carlo step is required.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapter" id="methods">
+      <div class="wrap method-grid">
+        <div>
+          <p class="eyebrow">04 · Mathematical core</p>
+          <h2>A simple map, collective complexity.</h2>
+          <div class="formula">
+            xᵢ(t+1) = (1−ε) fᵢ(t) + ε h(t)<br>
+            yᵢ(t+1) = a yᵢ(t) − b xᵢ(t) + c
+          </div>
+          <p class="lede">Quenched heterogeneity enters through each neuron's stimulus parameter kᵢ. The global field h(t) couples the population.</p>
+        </div>
+        <ul class="method-list">
+          <li><b>01</b><div><h3>Local chaos</h3><p>The Chialvo map reproduces excitable spiking and chaotic dynamics with two state variables.</p></div></li>
+          <li><b>02</b><div><h3>Rare coherent regions</h3><p>Parameter disorder lets subsets of neurons transiently sustain coherent behavior.</p></div></li>
+          <li><b>03</b><div><h3>Intermittent clusters</h3><p>The population alternates between synchronization and dispersion across an interval of ε.</p></div></li>
+          <li><b>04</b><div><h3>Topological extension</h3><p>A Watts–Strogatz network combines intrinsic and structural disorder, broadening the observed regime.</p></div></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div><p class="eyebrow" style="color:#82b79a">Main result</p><h2>Intrinsic neuronal diversity is enough to generate an extended region of critical-like chaotic dynamics.</h2></div>
+      <div class="footer-links">
+        <a href="https://github.com/JS-Rojas/Criticality-in-Neuron-Map-Networks" target="_blank" rel="noreferrer">GitHub repository ↗</a>
+        <a href="#top">Back to top ↑</a>
+      </div>
+      <div class="copyright">Interactive companion to “Chaotic Griffiths phase in neuron map networks” · Juan S. Rojas and M. G. Cosenza.</div>
+    </div>
+  </footer>
+  <div class="tooltip" id="tooltip"></div>
+
+  <script>
+    const $ = (q, root = document) => root.querySelector(q);
+    const $$ = (q, root = document) => [...root.querySelectorAll(q)];
+    const COLORS = { global: '#755a78', swn: '#2d7252', fit: '#d5863a' };
+
+    // Reading progress
+    addEventListener('scroll', () => {
+      const total = document.documentElement.scrollHeight - innerHeight;
+      $('#progress').style.width = `${Math.max(0, scrollY / total) * 100}%`;
+    }, { passive: true });
+
+    // Calm hero particle field
+    const hero = $('#heroCanvas');
+    const hctx = hero.getContext('2d');
+    let heroDots = [];
+    function resizeHero() {
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      hero.width = innerWidth * dpr; hero.height = innerHeight * dpr;
+      hero.style.width = innerWidth + 'px'; hero.style.height = innerHeight + 'px';
+      hctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      heroDots = Array.from({ length: Math.min(115, Math.floor(innerWidth / 9)) }, () => ({
+        x: Math.random() * innerWidth, y: Math.random() * innerHeight,
+        r: 1 + Math.random() * 2.5, v: .08 + Math.random() * .22, p: Math.random() * Math.PI * 2
+      }));
+    }
+    function drawHero(t) {
+      hctx.clearRect(0, 0, innerWidth, innerHeight);
+      heroDots.forEach((d, i) => {
+        d.y -= d.v; d.x += Math.sin(t * .00025 + d.p) * .06;
+        if (d.y < -10) { d.y = innerHeight + 10; d.x = Math.random() * innerWidth; }
+        hctx.beginPath(); hctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        hctx.fillStyle = i % 5 ? 'rgba(45,114,82,.24)' : 'rgba(213,134,58,.28)'; hctx.fill();
+      });
+      requestAnimationFrame(drawHero);
+    }
+    resizeHero(); addEventListener('resize', resizeHero); requestAnimationFrame(drawHero);
+
+    // Browser-scale Chialvo network. This is intentionally small and separate from paper statistics.
+    const sim = $('#simCanvas');
+    const sctx = sim.getContext('2d');
+    const N = 96, historyLength = 180;
+    let x = Array.from({ length: N }, () => .05 + Math.random() * .45);
+    let y = Array.from({ length: N }, () => .2 + Math.random() * .7);
+    const k = Array.from({ length: N }, () => .026 + Math.random() * .004);
+    let histories = Array.from({ length: 24 }, () => Array(historyLength).fill(0));
+    let eps = +$('#epsilonSlider').value;
+    function resizeSim() {
+      const rect = sim.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
+      sim.width = rect.width * dpr; sim.height = 430 * dpr;
+      sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    function resetSim() {
+      x = x.map(() => .05 + Math.random() * .45); y = y.map(() => .2 + Math.random() * .7);
+      histories = histories.map(() => Array(historyLength).fill(0));
+      for (let j = 0; j < 450; j++) stepMap();
+    }
+    function stepMap() {
+      const f = x.map((xi, i) => Math.min(5, xi * xi * Math.exp(y[i] - xi) + k[i]));
+      const meanF = f.reduce((a, b) => a + b, 0) / N;
+      const nextX = f.map(fi => (1 - eps) * fi + eps * meanF);
+      const nextY = x.map((xi, i) => .89 * y[i] - .18 * xi + .28);
+      x = nextX; y = nextY;
+      for (let i = 0; i < histories.length; i++) { histories[i].push(x[i * 4]); histories[i].shift(); }
+    }
+    function drawSim() {
+      const w = sim.clientWidth, h = 430;
+      for (let q = 0; q < 2; q++) stepMap();
+      sctx.fillStyle = 'rgba(23,32,28,.16)'; sctx.fillRect(0, 0, w, h);
+      sctx.strokeStyle = 'rgba(255,255,255,.07)'; sctx.lineWidth = 1;
+      [1,2,3,4].forEach(v => { const yy = h - 34 - v / 5 * (h - 70); sctx.beginPath(); sctx.moveTo(20, yy); sctx.lineTo(w - 15, yy); sctx.stroke(); });
+      histories.forEach((series, i) => {
+        sctx.beginPath();
+        series.forEach((v, j) => {
+          const xx = 20 + j / (historyLength - 1) * (w - 38);
+          const yy = h - 30 - Math.max(0, Math.min(5, v)) / 5 * (h - 65);
+          j ? sctx.lineTo(xx, yy) : sctx.moveTo(xx, yy);
+        });
+        sctx.strokeStyle = i % 5 === 0 ? 'rgba(230,160,90,.58)' : `rgba(112,190,148,${.18 + i / 100})`;
+        sctx.lineWidth = i % 5 === 0 ? 1.3 : .75; sctx.stroke();
+      });
+      requestAnimationFrame(drawSim);
+    }
+    $('#epsilonSlider').addEventListener('input', e => {
+      eps = +e.target.value; $('#epsilonValue').textContent = eps.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+      const state = eps < .08 ? 'mostly desynchronized' : eps < .42 ? 'intermittent regime' : 'toward synchronization';
+      $('#regimeChip').textContent = state;
+    });
+    $('#epsilonSlider').addEventListener('change', resetSim);
+    resizeSim(); addEventListener('resize', resizeSim); resetSim(); requestAnimationFrame(drawSim);
+
+    // CSV helpers
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r?\n/); const headers = lines[0].split(',');
+      return lines.slice(1).filter(Boolean).map(line => Object.fromEntries(line.split(',').map((v, i) => [headers[i], +v])));
+    }
+    async function loadCSV(path) {
+      const res = await fetch(path); if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+      return parseCSV(await res.text());
+    }
+    const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+    const fmt = n => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(0)}k` : `${Math.round(n)}`;
+    const tooltip = $('#tooltip');
+    function showTip(event, html) { tooltip.innerHTML = html; tooltip.style.left = event.clientX + 'px'; tooltip.style.top = event.clientY + 'px'; tooltip.style.opacity = 1; }
+    function hideTip() { tooltip.style.opacity = 0; }
+    const svgNS = 'http://www.w3.org/2000/svg';
+    function node(name, attrs = {}, text = '') { const n = document.createElementNS(svgNS, name); Object.entries(attrs).forEach(([k,v]) => n.setAttribute(k, v)); if (text) n.textContent = text; return n; }
+    function chartShell(container, { logX = false, logY = false, yMax = 1, xMin = 0, xMax = 1, yMin = 0 }) {
+      container.className = ''; container.innerHTML = '';
+      const W = 1040, H = 500, m = { t: 25, r: 30, b: 62, l: 78 };
+      const svg = node('svg', { viewBox: `0 0 ${W} ${H}`, class: 'chart', role: 'img' }); container.append(svg);
+      const sx = v => m.l + (logX ? (Math.log10(v)-Math.log10(xMin))/(Math.log10(xMax)-Math.log10(xMin)) : (v-xMin)/(xMax-xMin)) * (W-m.l-m.r);
+      const sy = v => H-m.b - (logY ? (Math.log10(v)-Math.log10(yMin))/(Math.log10(yMax)-Math.log10(yMin)) : (v-yMin)/(yMax-yMin)) * (H-m.t-m.b);
+      return { svg, W, H, m, sx, sy };
+    }
+
+    // DFC phase diagram
+    const dfcFiles = { global: 'DFC-Heterogeneity-parameters.csv', swn: 'DFC-Both-Heterogeneities.csv' };
+    let dfcMode = 'global', dfcCache = {};
+    async function drawDFC() {
+      const box = $('#dfcChart');
+      try {
+        const rows = dfcCache[dfcMode] ||= await loadCSV(dfcFiles[dfcMode]);
+        const data = rows.map(r => ({ epsilon: r.epsilon, sigma: mean(Object.entries(r).filter(([k]) => k.startsWith('run_')).map(([,v]) => v)) }));
+        const ymax = Math.max(.45, ...data.map(d => d.sigma)) * 1.04;
+        const {svg,W,H,m,sx,sy} = chartShell(box, { xMin: 0, xMax: 1, yMin: 0, yMax: ymax });
+        for (let v = 0; v <= .4; v += .1) { const yy=sy(v); svg.append(node('line',{x1:m.l,y1:yy,x2:W-m.r,y2:yy,class:'grid'})); svg.append(node('text',{x:m.l-13,y:yy+4,'text-anchor':'end'},v.toFixed(1))); }
+        for (let v = 0; v <= 1.0001; v += .2) { const xx=sx(v); svg.append(node('text',{x:xx,y:H-m.b+25,'text-anchor':'middle'},v.toFixed(1))); }
+        svg.append(node('line',{x1:m.l,y1:H-m.b,x2:W-m.r,y2:H-m.b,class:'axis'}));
+        svg.append(node('line',{x1:m.l,y1:m.t,x2:m.l,y2:H-m.b,class:'axis'}));
+        const threshold = sy(.1); svg.append(node('line',{x1:m.l,y1:threshold,x2:W-m.r,y2:threshold,stroke:'#b64f47','stroke-dasharray':'6 7'}));
+        svg.append(node('text',{x:W-m.r-4,y:threshold-9,'text-anchor':'end',fill:'#b64f47'},'threshold = 0.1'));
+        const path = data.map((d,i)=>`${i?'L':'M'}${sx(d.epsilon).toFixed(2)},${sy(d.sigma).toFixed(2)}`).join(' ');
+        svg.append(node('path',{d:path,fill:'none',stroke:COLORS[dfcMode],'stroke-width':3,'stroke-linejoin':'round'}));
+        data.forEach(d => { const c=node('circle',{cx:sx(d.epsilon),cy:sy(d.sigma),r:5,fill:COLORS[dfcMode],opacity:.82,tabindex:0}); c.addEventListener('pointermove',e=>showTip(e,`ε <b>${d.epsilon.toFixed(3)}</b><br>σ(p) <b>${d.sigma.toFixed(3)}</b>`)); c.addEventListener('pointerleave',hideTip); svg.append(c); });
+        svg.append(node('text',{x:(m.l+W-m.r)/2,y:H-13,'text-anchor':'middle'},'coupling strength ε'));
+        const yl=node('text',{x:18,y:(m.t+H-m.b)/2,'text-anchor':'middle',transform:`rotate(-90 18 ${(m.t+H-m.b)/2})`},'dispersion σ(p)'); svg.append(yl);
+      } catch (err) { box.className='error-box'; box.textContent=`Could not load the DFC data. On GitHub Pages this should resolve automatically. ${err.message}`; }
+    }
+    $$('#dfcTopology button').forEach(b => b.addEventListener('click', () => { $$('#dfcTopology button').forEach(x=>x.classList.toggle('active',x===b)); dfcMode=b.dataset.mode; drawDFC(); }));
+    drawDFC();
+
+    // Power-law explorer: merge all precomputed histograms already in the repository.
+    const plFiles = {
+      global: ['griffiths_data.csv','griffiths_data_extra_eps.csv','griffiths_data_extra_eps2.csv'],
+      swn: ['SWN_Heterogeneity_data_2.csv','SWN_Heterogeneity_data_extra_eps.csv']
+    };
+    let plMode='global', plData={global:null,swn:null};
+    function slopeFit(points, lo=10, hi=1000) {
+      const a=points.filter(d=>d.s>=lo&&d.s<=hi&&d.count>0).map(d=>[Math.log10(d.s),Math.log10(d.count)]);
+      const xm=mean(a.map(d=>d[0])), ym=mean(a.map(d=>d[1]));
+      const slope=a.reduce((z,d)=>z+(d[0]-xm)*(d[1]-ym),0)/a.reduce((z,d)=>z+(d[0]-xm)**2,0);
+      return {alpha:-slope, intercept:ym-slope*xm, slope};
+    }
+    async function loadPL(mode) {
+      if (plData[mode]) return plData[mode];
+      const tables=await Promise.all(plFiles[mode].map(loadCSV)), merged={};
+      tables.forEach(rows=>{ if(!rows.length)return; Object.keys(rows[0]).filter(k=>k!=='cluster_size').forEach(col=>{ const e=+(col.replace('eps_','')); merged[e]=rows.map(r=>({s:r.cluster_size,count:r[col]})).filter(d=>d.s>0&&d.count>0); }); });
+      return plData[mode]=merged;
+    }
+    async function refreshPLControls(preferred) {
+      const data=await loadPL(plMode), values=Object.keys(data).map(Number).sort((a,b)=>a-b), select=$('#epsilonSelect');
+      select.innerHTML=values.map(v=>`<option value="${v}">ε = ${v.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')}</option>`).join('');
+      select.value=preferred && values.includes(preferred) ? preferred : values[Math.floor(values.length/2)]; drawPL();
+    }
+    async function drawPL() {
+      const box=$('#plChart');
+      try {
+        const data=await loadPL(plMode), e=+$('#epsilonSelect').value, points=data[e], fit=slopeFit(points);
+        const xMin=Math.max(1,Math.min(...points.map(d=>d.s))), xMax=Math.max(...points.map(d=>d.s));
+        const yMin=Math.max(1,Math.min(...points.map(d=>d.count))), yMax=Math.max(...points.map(d=>d.count));
+        const {svg,W,H,m,sx,sy}=chartShell(box,{logX:true,logY:true,xMin,xMax,yMin,yMax});
+        const xTicks=[1,10,100,1000,10000].filter(v=>v>=xMin&&v<=xMax), yTicks=[1,10,100,1e3,1e4,1e5,1e6,1e7,1e8].filter(v=>v>=yMin&&v<=yMax);
+        yTicks.forEach(v=>{const yy=sy(v);svg.append(node('line',{x1:m.l,y1:yy,x2:W-m.r,y2:yy,class:'grid'}));svg.append(node('text',{x:m.l-13,y:yy+4,'text-anchor':'end'},v>=1000?`10^${Math.log10(v)}`:v));});
+        xTicks.forEach(v=>{const xx=sx(v);svg.append(node('text',{x:xx,y:H-m.b+25,'text-anchor':'middle'},`10^${Math.log10(v)}`));});
+        svg.append(node('line',{x1:m.l,y1:H-m.b,x2:W-m.r,y2:H-m.b,class:'axis'}));svg.append(node('line',{x1:m.l,y1:m.t,x2:m.l,y2:H-m.b,class:'axis'}));
+        const decimated=points.filter((d,i)=>i===0||i===points.length-1||i%Math.max(1,Math.floor(points.length/850))===0);
+        const path=decimated.map((d,i)=>`${i?'L':'M'}${sx(d.s).toFixed(2)},${sy(d.count).toFixed(2)}`).join(' ');
+        svg.append(node('path',{d:path,fill:'none',stroke:COLORS[plMode],'stroke-width':2.2,opacity:.86}));
+        decimated.forEach(d=>{const c=node('circle',{cx:sx(d.s),cy:sy(d.count),r:3.2,fill:COLORS[plMode],opacity:.72});c.addEventListener('pointermove',ev=>showTip(ev,`size s <b>${d.s}</b><br>count <b>${fmt(d.count)}</b>`));c.addEventListener('pointerleave',hideTip);svg.append(c);});
+        const fitPts=[10,Math.min(1000,xMax)].map(s=>({s,count:10**(fit.intercept+fit.slope*Math.log10(s))}));
+        svg.append(node('line',{x1:sx(fitPts[0].s),y1:sy(fitPts[0].count),x2:sx(fitPts[1].s),y2:sy(fitPts[1].count),stroke:COLORS.fit,'stroke-width':4,'stroke-linecap':'round'}));
+        svg.append(node('text',{x:sx(fitPts[1].s)-8,y:sy(fitPts[1].count)-12,'text-anchor':'end',fill:COLORS.fit},`guide α = ${fit.alpha.toFixed(2)}`));
+        svg.append(node('text',{x:(m.l+W-m.r)/2,y:H-13,'text-anchor':'middle'},'cluster size s'));
+        svg.append(node('text',{x:18,y:(m.t+H-m.b)/2,'text-anchor':'middle',transform:`rotate(-90 18 ${(m.t+H-m.b)/2})`},'cluster count'));
+        $('#metricTopology').textContent=plMode==='global'?'Global':'Small-world';$('#metricEpsilon').textContent=e.toFixed(3).replace(/0+$/,'').replace(/\.$/,'');$('#metricAlpha').textContent=fit.alpha.toFixed(2);
+      } catch(err) {box.className='error-box';box.textContent=`Could not load the cluster histograms. On GitHub Pages this should resolve automatically. ${err.message}`;}
+    }
+    $$('#plTopology button').forEach(b=>b.addEventListener('click',()=>{$$('#plTopology button').forEach(x=>x.classList.toggle('active',x===b));plMode=b.dataset.mode;refreshPLControls();}));
+    $('#epsilonSelect').addEventListener('change',drawPL);
+    refreshPLControls(.2);
+  </script>
+</body>
+</html>
