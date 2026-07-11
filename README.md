@@ -6,7 +6,7 @@ This repository contains the code to reproduce the figures and results from the 
 
 ## Usage
 
-Each script generates one of the figures from the article. Make sure to download the corresponding data files (`.csv`) are in the same directory before running:
+Each script generates one of the figures from the article. Make sure to download the corresponding data files (`.csv`) that are in the same directory before running.
 
 ## Contents
 - Time Series
